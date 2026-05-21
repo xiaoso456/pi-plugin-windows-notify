@@ -1,4 +1,4 @@
-import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import notifier from "node-notifier";
 import activeWin from "active-win";
 
@@ -6,7 +6,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-const PERSIST_PATH = join(homedir(), ".omp", "pi-windows-tip-config.json");
+const PERSIST_PATH = join(homedir(), ".pi", "pi-windows-tip-config.json");
 
 interface PersistedConfig {
   notifyEnabled: boolean;
@@ -38,10 +38,10 @@ const DEFAULT_CONFIG: PersistedConfig = {
   minTaskDuration: 2000,
   playSound: true,
   notifyTimeout: 15,
-  appName: "Oh My Pi 助手",
+  appName: "Pi 助手",
 };
 
-let windowDetectionSupported: boolean | null = null;
+const windowDetectionSupported: boolean | null = null;
 
 function loadPersistedConfig(): PersistedConfig {
   try {
@@ -58,7 +58,7 @@ function loadPersistedConfig(): PersistedConfig {
 
 function saveConfig(cfg: PersistedConfig): void {
   try {
-    const dir = join(homedir(), ".omp");
+    const dir = join(homedir(), ".pi");
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
     writeFileSync(PERSIST_PATH, JSON.stringify(cfg, null, 2));
   } catch {
@@ -84,7 +84,7 @@ interface CapturedWindow {
 
 let afkReferenceWindow: CapturedWindow | null = null;
 
-async function captureCurrentWindow(logger: ExtensionAPI["logger"]): Promise<CapturedWindow | null> {
+async function captureCurrentWindow(logger: Console): Promise<CapturedWindow | null> {
   try {
     const result = await activeWin();
     if (!result) return null;
@@ -101,7 +101,7 @@ async function captureCurrentWindow(logger: ExtensionAPI["logger"]): Promise<Cap
   }
 }
 
-async function isUserAwayFromWindow(logger: ExtensionAPI["logger"]): Promise<boolean> {
+async function isUserAwayFromWindow(logger: Console): Promise<boolean> {
   if (windowDetectionSupported === false || !afkReferenceWindow) return true;
 
   try {
@@ -119,7 +119,7 @@ async function sendNotification(
   title: string,
   message: string,
   state: PluginState,
-  logger: ExtensionAPI["logger"],
+  logger: Console,
   force = false,
 ): Promise<void> {
   if (!state.notifyEnabled && !force) return;
@@ -138,7 +138,7 @@ async function sendNotification(
     notifier.notify({
       title,
       message,
-      // @ts-expect-error node-notifier runtime accepts sound/wait/appID/timeout
+      // @ts-expect-error node-notifier accepts these extra options
       sound: state.config.playSound,
       wait: false,
       appID: state.config.appName,
@@ -152,7 +152,7 @@ async function sendNotification(
 
 async function handleTaskComplete(
   state: PluginState,
-  logger: ExtensionAPI["logger"],
+  logger: Console,
   isError = false,
   errorMsg = "",
 ): Promise<void> {
@@ -164,12 +164,13 @@ async function handleTaskComplete(
   state.lastSentTaskId = taskId;
   logger.info(`Task complete, duration: ${taskDuration}, threshold: ${state.config.minTaskDuration}, error: ${isError}`);
 
-  const taskPreview = state.lastUserInput ? `\n你的任务：${state.lastUserInput.slice(0, 40)}${state.lastUserInput.length > 40 ? "..." : ""}` : "";
+  const taskShortDesc = state.lastUserInput ? `"${state.lastUserInput.slice(0, 20)}${state.lastUserInput.length > 20 ? "..." : ""}"` : ""
 
   if (isError && state.config.enableFailNotify) {
+    const taskLine = taskShortDesc ? `\n你的任务：${taskShortDesc}` : ""
     await sendNotification(
       "❌ 任务执行失败",
-      `执行出错：${errorMsg?.slice(0, 50) || "未知错误"}${taskPreview}\n请回到OMP查看详情。`,
+      `执行出错：${errorMsg?.slice(0, 50) || "未知错误"}${taskLine}\n请回到Pi查看详情。`,
       state,
       logger,
     );
@@ -177,10 +178,10 @@ async function handleTaskComplete(
   }
 
   if (state.config.enableSuccessNotify && taskDuration >= state.config.minTaskDuration) {
-    const content = taskPreview ? taskPreview.slice(1) : "任务已完成";
+    const taskLine = taskShortDesc ? `${taskShortDesc} ` : ""
     await sendNotification(
       "✅ 任务执行完成",
-      `${content}\n点击通知回到OMP查看结果。`,
+      `${taskLine}已完成\n请回到Pi查看结果。`,
       state,
       logger,
     );
@@ -188,10 +189,10 @@ async function handleTaskComplete(
 }
 
 export default function windowsNotification(pi: ExtensionAPI): void {
-  pi.setLabel("Windows系统通知插件");
+
 
   const saved = loadPersistedConfig();
-  // AFK模式上次开启过，本次启动需要重新捕获参考窗口
+  // AFK模式上次开启过,本次启动需要重新捕获参考窗口
   const needsAfkCapture = saved.onlyNotifyWhenAfk;
 
   const state: PluginState = {
@@ -203,14 +204,14 @@ export default function windowsNotification(pi: ExtensionAPI): void {
     config: saved,
   };
 
-  const logger = pi.logger;
+  const logger = console;
 
-  pi.on("input", async (event) => {
+  pi.on("input", async (event: any) => {
     state.lastUserInputTime = Date.now();
-    // @ts-ignore InputEvent may have content property
-    const content = (event as any).content ?? "";
+    // 兼容两种字段名，同时打印所有字段方便排查
+    const content = event.text ?? event.content ?? event.message ?? JSON.stringify(event);
     state.lastUserInput = content.trim();
-    logger.info(`User input recorded: ${state.lastUserInputTime}, content: ${content.slice(0, 20)}`);
+    logger.info(`User input recorded: ${state.lastUserInputTime}, content: ${content.slice(0, 100)}, event keys: ${Object.keys(event)}`);
   });
 
   pi.on("turn_end", async (_event, ctx) => {
@@ -222,7 +223,7 @@ export default function windowsNotification(pi: ExtensionAPI): void {
 
   pi.on("agent_end", async (event, _ctx) => {
     logger.info("agent_end triggered");
-    // @ts-ignore AgentEndEvent may have isError and error properties
+
     await handleTaskComplete(state, logger, (event as any).isError, (event as any).error?.message);
   });
 
@@ -235,16 +236,16 @@ export default function windowsNotification(pi: ExtensionAPI): void {
 
   pi.on("tool_call", async (event) => {
     if (event.toolName === "ask" && state.config.enableAskNotify) {
-      // @ts-ignore event.input may have questions property
+
       const questions = (event.input as any).questions as Array<{ question: string; options: Array<{ label: string }> }> ?? [];
       const question = questions[0]?.question ?? "需要你的确认";
       const options = questions[0]?.options ?? [];
 
-      let message = `问题：${question}`;
+      let message = `问题:${question}`;
       if (options.length > 0) {
-        message += "\n\n可选操作：\n" + options.map((opt, idx) => `${idx + 1}. ${opt.label}`).join("\n");
+        message += "\n\n可选操作:\n" + options.map((opt, idx) => `${idx + 1}. ${opt.label}`).join("\n");
       }
-      message += "\n点击通知回到OMP回复。";
+      message += "\n请回到Pi回复。";
 
       await sendNotification("❓ 需要你的确认", message, state, logger);
     }
@@ -271,7 +272,7 @@ export default function windowsNotification(pi: ExtensionAPI): void {
   });
 
   pi.registerCommand("notify-afk-only", {
-    description: "开启仅离开窗口时通知模式（在终端内操作时不发通知）",
+    description: "开启仅离开窗口时通知模式(在终端内操作时不发通知)",
     handler: async (_args, ctx) => {
       state.config.onlyNotifyWhenAfk = true;
       let hint = "";
@@ -279,9 +280,9 @@ export default function windowsNotification(pi: ExtensionAPI): void {
       const captured = await captureCurrentWindow(logger);
       if (captured) {
         afkReferenceWindow = captured;
-        hint = `\n已记录参考窗口：0x${captured.hwnd.toString(16)} - "${captured.title}"`;
+        hint = `\n已记录参考窗口:0x${captured.hwnd.toString(16)} - "${captured.title}"`;
       } else {
-        hint = "\n⚠️ 无法获取当前窗口信息，AFK模式不会生效";
+        hint = "\n⚠️ 无法获取当前窗口信息,AFK模式不会生效";
       }
 
       saveConfig(state.config);
@@ -290,12 +291,12 @@ export default function windowsNotification(pi: ExtensionAPI): void {
   });
 
   pi.registerCommand("notify-always", {
-    description: "恢复普通模式：所有符合条件的任务都发通知",
+    description: "恢复普通模式:所有符合条件的任务都发通知",
     handler: async (_args, ctx) => {
       state.config.onlyNotifyWhenAfk = false;
       afkReferenceWindow = null;
       saveConfig(state.config);
-      ctx.ui.notify("已恢复普通模式：所有符合条件都发通知", "info");
+      ctx.ui.notify("已恢复普通模式:所有符合条件都发通知", "info");
     },
   });
 
@@ -305,8 +306,8 @@ export default function windowsNotification(pi: ExtensionAPI): void {
       const status = state.notifyEnabled ? "✅ 已开启" : "❌ 已关闭";
       const threshold = (state.config.minTaskDuration / 1000).toFixed(1);
       const mode = state.config.onlyNotifyWhenAfk ? "🧘 仅离开窗口时通知" : "🔔 所有符合条件都通知";
-      const afkRefInfo = afkReferenceWindow ? `\n参考窗口：0x${afkReferenceWindow.hwnd.toString(16)} - ${afkReferenceWindow.title}` : "";
-      ctx.ui.notify(`通知状态：${status}\n触发阈值：超过${threshold}秒的任务\n当前模式：${mode}${afkRefInfo}`, "info");
+      const afkRefInfo = afkReferenceWindow ? `\n参考窗口:0x${afkReferenceWindow.hwnd.toString(16)} - ${afkReferenceWindow.title}` : "";
+      ctx.ui.notify(`通知状态:${status}\n触发阈值:超过${threshold}秒的任务\n当前模式:${mode}${afkRefInfo}`, "info");
     },
   });
 
@@ -317,9 +318,9 @@ export default function windowsNotification(pi: ExtensionAPI): void {
       const captured = await captureCurrentWindow(logger);
       if (captured) {
         afkReferenceWindow = captured;
-        logger.info(`AFK模式重启，自动记录参考窗口：0x${captured.hwnd.toString(16)}`);
+        logger.info(`AFK模式重启,自动记录参考窗口:0x${captured.hwnd.toString(16)}`);
       } else {
-        logger.warn("AFK模式重启，但无法捕获当前窗口，本次启动不会生效");
+        logger.warn("AFK模式重启,但无法捕获当前窗口,本次启动不会生效");
         state.config.onlyNotifyWhenAfk = false;
       }
     }
