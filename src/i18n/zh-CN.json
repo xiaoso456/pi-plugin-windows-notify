@@ -1,0 +1,38 @@
+{
+	"settings": {
+		"title": "Windows 通知设置",
+		"enabled": "启用",
+		"enabledDesc": "控制 Windows 系统通知的总开关。关闭后将不再发送任何任务完成或确认通知。",
+		"notifyMode": "通知模式",
+		"notifyModeAfkDesc": "AFK 模式：仅当你离开当前窗口时才发送通知。",
+		"notifyModeAllDesc": "全部模式：所有符合条件的任务都会发送通知，无论你是否在窗口前。",
+		"language": "语言",
+		"languageDesc": "选择插件界面和通知的显示语言。"
+	},
+	"notifications": {
+		"taskFailed": "❌ 任务执行失败",
+		"taskFailedMsg": "执行出错：{errorMsg}{taskLine}\n请回到Pi查看详情。",
+		"taskComplete": "✅ 任务执行完成",
+		"taskCompleteMsg": "{taskLine}已完成\n请回到Pi查看结果。",
+		"askConfirm": "❓ 需要你的确认",
+		"askQuestion": "问题:{question}",
+		"askOptions": "可选操作:",
+		"askOptionItem": "{idx}. {label}",
+		"askReturn": "请回到Pi回复。",
+		"unknownError": "未知错误",
+		"yourTask": "你的任务：{task}",
+		"returnToPi": "请回到Pi查看详情。",
+		"returnToPiResult": "请回到Pi查看结果。"
+	},
+	"commands": {
+		"notifyDescription": "Windows通知设置菜单"
+	},
+	"logs": {
+		"referenceWindow": "已记录参考窗口: 句柄={hwnd}, 标题=\"{title}\"",
+		"windowCaptureFailed": "窗口捕获失败: {err}",
+		"windowCheckFailed": "窗口检测失败: {err}",
+		"afkRestartCaptured": "AFK模式重启,自动记录参考窗口:{hwnd}",
+		"afkRestartFailed": "AFK模式重启,但无法捕获当前窗口,本次启动不会生效",
+		"pluginLoaded": "Windows通知插件已加载, 启用: {enabled}, AFK: {afk}"
+	}
+}

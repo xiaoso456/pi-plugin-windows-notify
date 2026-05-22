@@ -1,0 +1,38 @@
+{
+	"settings": {
+		"title": "Configuración de notificaciones de Windows",
+		"enabled": "Habilitado",
+		"enabledDesc": "Interruptor principal de las notificaciones del sistema Windows. Al desactivarlo, no se enviarán notificaciones de tareas completadas ni de confirmación.",
+		"notifyMode": "Modo de notificación",
+		"notifyModeAfkDesc": "Modo AFK: Solo envía notificaciones cuando te ausentas de la ventana actual.",
+		"notifyModeAllDesc": "Modo todo: Todas las tareas que cumplan los criterios enviarán notificaciones, independientemente de si estás en la ventana.",
+		"language": "Idioma",
+		"languageDesc": "Selecciona el idioma de visualización de la interfaz del plugin y las notificaciones."
+	},
+	"notifications": {
+		"taskFailed": "❌ Tarea fallida",
+		"taskFailedMsg": "Error: {errorMsg}{taskLine}\nVuelve a Pi para ver los detalles.",
+		"taskComplete": "✅ Tarea completada",
+		"taskCompleteMsg": "{taskLine}completada\nVuelve a Pi para ver los resultados.",
+		"askConfirm": "❓ Se requiere confirmación",
+		"askQuestion": "Pregunta:{question}",
+		"askOptions": "Opciones:",
+		"askOptionItem": "{idx}. {label}",
+		"askReturn": "Vuelve a Pi para responder.",
+		"unknownError": "Error desconocido",
+		"yourTask": "Tu tarea: {task}",
+		"returnToPi": "Vuelve a Pi para ver los detalles.",
+		"returnToPiResult": "Vuelve a Pi para ver los resultados."
+	},
+	"commands": {
+		"notifyDescription": "Menú de configuración de notificaciones de Windows"
+	},
+	"logs": {
+		"referenceWindow": "Ventana de referencia registrada: handle={hwnd}, título=\"{title}\"",
+		"windowCaptureFailed": "Captura de ventana fallida: {err}",
+		"windowCheckFailed": "Verificación de ventana fallida: {err}",
+		"afkRestartCaptured": "Modo AFK reiniciado, ventana de referencia capturada automáticamente:{hwnd}",
+		"afkRestartFailed": "Modo AFK reiniciado, pero no se pudo capturar la ventana actual, no se aplicará en esta sesión",
+		"pluginLoaded": "Plugin de notificaciones de Windows cargado, habilitado: {enabled}, AFK: {afk}"
+	}
+}

@@ -1,0 +1,38 @@
+{
+	"settings": {
+		"title": "Paramètres des notifications Windows",
+		"enabled": "Activé",
+		"enabledDesc": "Interrupteur principal des notifications système Windows. Si désactivé, aucune notification de fin de tâche ou de confirmation ne sera envoyée.",
+		"notifyMode": "Mode de notification",
+		"notifyModeAfkDesc": "Mode AFK : Envoie des notifications uniquement lorsque vous êtes absent de la fenêtre actuelle.",
+		"notifyModeAllDesc": "Mode tout : Toutes les tâches éligibles déclencheront des notifications, que vous soyez ou non à la fenêtre.",
+		"language": "Langue",
+		"languageDesc": "Sélectionnez la langue d'affichage de l'interface du plugin et des notifications."
+	},
+	"notifications": {
+		"taskFailed": "❌ Tâche échouée",
+		"taskFailedMsg": "Erreur : {errorMsg}{taskLine}\nRetournez à Pi pour plus de détails.",
+		"taskComplete": "✅ Tâche terminée",
+		"taskCompleteMsg": "{taskLine}terminée\nRetournez à Pi pour voir les résultats.",
+		"askConfirm": "❓ Confirmation requise",
+		"askQuestion": "Question :{question}",
+		"askOptions": "Options :",
+		"askOptionItem": "{idx}. {label}",
+		"askReturn": "Retournez à Pi pour répondre.",
+		"unknownError": "Erreur inconnue",
+		"yourTask": "Votre tâche : {task}",
+		"returnToPi": "Retournez à Pi pour plus de détails.",
+		"returnToPiResult": "Retournez à Pi pour voir les résultats."
+	},
+	"commands": {
+		"notifyDescription": "Menu des paramètres de notification Windows"
+	},
+	"logs": {
+		"referenceWindow": "Fenêtre de référence enregistrée : handle={hwnd}, titre=\"{title}\"",
+		"windowCaptureFailed": "Capture de fenêtre échouée : {err}",
+		"windowCheckFailed": "Vérification de fenêtre échouée : {err}",
+		"afkRestartCaptured": "Mode AFK redémarré, fenêtre de référence capturée automatiquement :{hwnd}",
+		"afkRestartFailed": "Mode AFK redémarré, mais impossible de capturer la fenêtre actuelle, ne sera pas actif cette session",
+		"pluginLoaded": "Plugin de notifications Windows chargé, activé : {enabled}, AFK : {afk}"
+	}
+}

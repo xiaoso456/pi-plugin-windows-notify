@@ -1,0 +1,38 @@
+{
+	"settings": {
+		"title": "Windows 알림 설정",
+		"enabled": "활성화",
+		"enabledDesc": "Windows 시스템 알림의 마스터 스위치입니다. 끄면 작업 완료나 확인 알림이 전송되지 않습니다.",
+		"notifyMode": "알림 모드",
+		"notifyModeAfkDesc": "AFK 모드: 현재 창에서 벗어났을 때만 알림을 보냅니다.",
+		"notifyModeAllDesc": "전체 모드: 창 앞에 있는지 여부와 관계없이 조건을 충족하는 모든 작업이 알림을 보냅니다.",
+		"language": "언어",
+		"languageDesc": "플러그인 인터페이스 및 알림의 표시 언어를 선택합니다."
+	},
+	"notifications": {
+		"taskFailed": "❌ 작업 실패",
+		"taskFailedMsg": "오류: {errorMsg}{taskLine}\nPi로 돌아가서 자세히 확인하세요.",
+		"taskComplete": "✅ 작업 완료",
+		"taskCompleteMsg": "{taskLine}완료되었습니다\nPi로 돌아가서 결과를 확인하세요.",
+		"askConfirm": "❓ 확인이 필요합니다",
+		"askQuestion": "질문:{question}",
+		"askOptions": "선택 사항:",
+		"askOptionItem": "{idx}. {label}",
+		"askReturn": "Pi로 돌아가서 답변해 주세요.",
+		"unknownError": "알 수 없는 오류",
+		"yourTask": "작업: {task}",
+		"returnToPi": "Pi로 돌아가서 자세히 확인하세요.",
+		"returnToPiResult": "Pi로 돌아가서 결과를 확인하세요."
+	},
+	"commands": {
+		"notifyDescription": "Windows 알림 설정 메뉴"
+	},
+	"logs": {
+		"referenceWindow": "참조 창 기록: 핸들={hwnd}, 제목=\"{title}\"",
+		"windowCaptureFailed": "창 캡처 실패: {err}",
+		"windowCheckFailed": "창 감지 실패: {err}",
+		"afkRestartCaptured": "AFK 모드 재시작, 참조 창 자동 기록:{hwnd}",
+		"afkRestartFailed": "AFK 모드 재시작, 현재 창을 캡처할 수 없어 이번 세션에서는 적용되지 않습니다",
+		"pluginLoaded": "Windows 알림 플러그인 로드 완료, 활성화: {enabled}, AFK: {afk}"
+	}
+}

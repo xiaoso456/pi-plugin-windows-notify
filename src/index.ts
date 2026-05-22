@@ -12,9 +12,34 @@ import {
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
+import {
+	type Locale,
+	type Translations,
+	SUPPORTED_LOCALES,
+	detectSystemLocale,
+	getTranslations,
+} from "./i18n/index";
 
-const PERSIST_PATH = join(homedir(), ".pi", "pi-windows-tip-config.json");
-const PERSIST_DIR = dirname(PERSIST_PATH);
+function resolveAgentDir(): string {
+	// Mirror the logic of getAgentDir() from pi-coding-agent / omp-coding-agent:
+	//   1. PI_CODING_AGENT_DIR — full override for agent directory
+	//   2. PI_CONFIG_DIR — config root dirname under home (OMP default ".omp", Pi default ".pi")
+	//   3. Detect runtime from process.argv[1] (contains @oh-my-pi or @earendil-works)
+	if (process.env.PI_CODING_AGENT_DIR) {
+		return process.env.PI_CODING_AGENT_DIR;
+	}
+	const configDirName = process.env.PI_CONFIG_DIR;
+	if (configDirName) {
+		return join(homedir(), configDirName, "agent");
+	}
+	// No env vars set: detect runtime from the CLI entry point path.
+	// OMP loads @oh-my-pi/pi-coding-agent; Pi loads @earendil-works/pi-coding-agent.
+	const cliPath = (process.argv[1] || "").toLowerCase();
+	const isOmp = cliPath.includes("@oh-my-pi") || cliPath.includes("oh-my-pi");
+	const defaultConfigDir = isOmp ? ".omp" : ".pi";
+	return join(homedir(), defaultConfigDir, "agent");
+}
+
 
 function errorMessage(err: unknown): string {
 	return err instanceof Error ? err.message : String(err);
@@ -30,6 +55,7 @@ interface PersistedConfig {
 	playSound: boolean;
 	notifyTimeout: number;
 	appName: string;
+	locale: Locale;
 }
 
 const DEFAULT_CONFIG: PersistedConfig = {
@@ -37,16 +63,18 @@ const DEFAULT_CONFIG: PersistedConfig = {
 	enableSuccessNotify: true,
 	enableFailNotify: true,
 	enableAskNotify: true,
-	onlyNotifyWhenAfk: false,
+	onlyNotifyWhenAfk: true,
 	minTaskDuration: 2000,
 	playSound: true,
 	notifyTimeout: 15,
-	appName: "Pi 助手",
+	appName: "Pi Assistant",
+	locale: detectSystemLocale(),
 };
 
-function loadPersistedConfig(): PersistedConfig {
+function loadPersistedConfig(agentDir: string): PersistedConfig {
+	const persistPath = join(agentDir, "pi-windows-tip-config.json");
 	try {
-		const raw = readFileSync(PERSIST_PATH, "utf-8");
+		const raw = readFileSync(persistPath, "utf-8");
 		const saved = JSON.parse(raw);
 		return { ...DEFAULT_CONFIG, ...saved };
 	} catch {
@@ -54,10 +82,11 @@ function loadPersistedConfig(): PersistedConfig {
 	}
 }
 
-function saveConfig(cfg: PersistedConfig): void {
+function saveConfig(cfg: PersistedConfig, agentDir: string): void {
+	const persistPath = join(agentDir, "pi-windows-tip-config.json");
 	try {
-		mkdirSync(PERSIST_DIR, { recursive: true });
-		writeFileSync(PERSIST_PATH, JSON.stringify(cfg, null, 2));
+		mkdirSync(dirname(persistPath), { recursive: true });
+		writeFileSync(persistPath, JSON.stringify(cfg, null, 2));
 	} catch {
 		// ignore
 	}
@@ -80,8 +109,13 @@ interface CapturedWindow {
 
 let afkReferenceWindow: CapturedWindow | null = null;
 
+function i18n(state: PluginState): Translations {
+	return getTranslations(state.config.locale);
+}
+
 async function captureCurrentWindow(
 	logger: Console,
+	t: Translations,
 ): Promise<CapturedWindow | null> {
 	try {
 		const result = await activeWin();
@@ -92,16 +126,16 @@ async function captureCurrentWindow(
 			title: result.title,
 		};
 		logger.info(
-			`已记录参考窗口: 句柄=0x${captured.hwnd.toString(16)}, 标题="${captured.title}"`,
+			t.logs.referenceWindow(`0x${captured.hwnd.toString(16)}`, captured.title),
 		);
 		return captured;
 	} catch (err) {
-		logger.warn(`窗口捕获失败: ${errorMessage(err)}`);
+		logger.warn(t.logs.windowCaptureFailed(errorMessage(err)));
 		return null;
 	}
 }
 
-async function isUserAwayFromWindow(logger: Console): Promise<boolean> {
+async function isUserAwayFromWindow(logger: Console, t: Translations): Promise<boolean> {
 	if (!afkReferenceWindow) return true;
 
 	try {
@@ -110,7 +144,7 @@ async function isUserAwayFromWindow(logger: Console): Promise<boolean> {
 
 		return result.id !== afkReferenceWindow.hwnd;
 	} catch (err) {
-		logger.warn(`窗口检测失败: ${errorMessage(err)}`);
+		logger.warn(t.logs.windowCheckFailed(errorMessage(err)));
 		return true;
 	}
 }
@@ -128,7 +162,7 @@ async function sendNotification(
 	if (now - state.lastNotifyTime < NOTIFY_COOLDOWN_MS && !force) return;
 
 	if (state.config.onlyNotifyWhenAfk && !force) {
-		const userAway = await isUserAwayFromWindow(logger);
+		const userAway = await isUserAwayFromWindow(logger, i18n(state));
 		if (!userAway) return;
 	}
 
@@ -156,6 +190,7 @@ async function handleTaskComplete(
 	isError = false,
 	errorMsg = "",
 ): Promise<void> {
+	const t = i18n(state);
 	const taskDuration = Date.now() - state.lastUserInputTime;
 	const taskId = `${state.lastUserInputTime}-${taskDuration}`;
 
@@ -171,10 +206,15 @@ async function handleTaskComplete(
 		: "";
 
 	if (isError && state.config.enableFailNotify) {
-		const taskLine = taskShortDesc ? `\n你的任务：${taskShortDesc}` : "";
+		const taskLine = taskShortDesc
+			? "\n" + t.notifications.yourTask(taskShortDesc)
+			: "";
 		await sendNotification(
-			" 任务执行失败",
-			`执行出错：${errorMsg?.slice(0, 50) || "未知错误"}${taskLine}\n请回到Pi查看详情。`,
+			t.notifications.taskFailed,
+			t.notifications.taskFailedMsg(
+				errorMsg?.slice(0, 50) || t.notifications.unknownError,
+				taskLine,
+			),
 			state,
 			logger,
 		);
@@ -187,8 +227,8 @@ async function handleTaskComplete(
 	) {
 		const taskLine = taskShortDesc ? `${taskShortDesc} ` : "";
 		await sendNotification(
-			"✅ 任务执行完成",
-			`${taskLine}已完成\n请回到Pi查看结果。`,
+			t.notifications.taskComplete,
+			t.notifications.taskCompleteMsg(taskLine),
 			state,
 			logger,
 		);
@@ -196,44 +236,54 @@ async function handleTaskComplete(
 }
 
 function createSettingsItems(state: PluginState): SettingItem[] {
+	const t = i18n(state);
 	return [
 		{
 			id: "notifyEnabled",
-			label: "Notify",
+			label: t.settings.enabled,
 			currentValue: state.config.notifyEnabled ? "on" : "off",
 			values: ["on", "off"],
-			description:
-				"控制 Windows 系统通知的总开关。关闭后将不再发送任何任务完成或确认通知。",
+			description: t.settings.enabledDesc,
 		},
 		{
 			id: "notifyMode",
-			label: "Notify Mode",
+			label: t.settings.notifyMode,
 			currentValue: state.config.onlyNotifyWhenAfk ? "afk" : "all",
 			values: ["afk", "all"],
 			description: state.config.onlyNotifyWhenAfk
-				? "AFK 模式：仅当你离开当前窗口时才发送通知。"
-				: "全部模式：所有符合条件的任务都会发送通知，无论你是否在窗口前。",
+				? t.settings.notifyModeAfkDesc
+				: t.settings.notifyModeAllDesc,
+		},
+		{
+			id: "locale",
+			label: t.settings.language,
+			currentValue: state.config.locale,
+			values: SUPPORTED_LOCALES,
+			description: t.settings.languageDesc,
 		},
 	];
 }
 
-function settingsOnChange(state: PluginState, logger: Console) {
+function settingsOnChange(state: PluginState, logger: Console, agentDir: string) {
 	return (id: string, newValue: string) => {
 		if (id === "notifyEnabled") {
 			const on = newValue === "on";
 			state.config.notifyEnabled = on;
-			saveConfig(state.config);
+			saveConfig(state.config, agentDir);
 		} else if (id === "notifyMode") {
 			const isAfk = newValue === "afk";
 			state.config.onlyNotifyWhenAfk = isAfk;
 			if (!isAfk) {
 				afkReferenceWindow = null;
 			} else {
-				captureCurrentWindow(logger).then((captured) => {
+				captureCurrentWindow(logger, i18n(state)).then((captured) => {
 					if (captured) afkReferenceWindow = captured;
 				});
 			}
-			saveConfig(state.config);
+			saveConfig(state.config, agentDir);
+		} else if (id === "locale") {
+			state.config.locale = newValue as Locale;
+			saveConfig(state.config, agentDir);
 		}
 	};
 }
@@ -244,18 +294,20 @@ function buildSettingsUI(
 	tui: any,
 	theme: any,
 	done: (result: undefined) => void,
+	agentDir: string,
 ) {
+	const t = i18n(state);
 	const items = createSettingsItems(state);
 	const container = new Container();
 	container.addChild(
-		new Text(theme.fg("accent", theme.bold("Windows 通知设置")), 1, 0),
+		new Text(theme.fg("accent", theme.bold(t.settings.title)), 1, 0),
 	);
 
 	const settingsList = new SettingsList(
 		items,
 		items.length,
 		getSettingsListTheme(),
-		settingsOnChange(state, logger),
+		settingsOnChange(state, logger, agentDir),
 		() => done(undefined),
 	);
 	container.addChild(settingsList);
@@ -278,11 +330,12 @@ async function showSettingsUI(
 	state: PluginState,
 	logger: Console,
 	ctx: any,
+	agentDir: string,
 	defer = false,
 ): Promise<void> {
 	const render = async () => {
 		await ctx.ui.custom((tui: any, theme: any, _kb: any, done: (result: undefined) => void) =>
-			buildSettingsUI(state, logger, tui, theme, done),
+			buildSettingsUI(state, logger, tui, theme, done, agentDir),
 		);
 	};
 	if (defer) {
@@ -293,7 +346,8 @@ async function showSettingsUI(
 }
 
 export default function windowsNotification(pi: ExtensionAPI): void {
-	const saved = loadPersistedConfig();
+	const agentDir = resolveAgentDir();
+	const saved = loadPersistedConfig(agentDir);
 	const needsAfkCapture = saved.onlyNotifyWhenAfk;
 
 	const state: PluginState = {
@@ -304,7 +358,7 @@ export default function windowsNotification(pi: ExtensionAPI): void {
 		config: saved,
 	};
 
-	const logPath = join(homedir(), ".pi", "pi-windows-tip.log");
+	const logPath = join(agentDir, "pi-windows-tip.log");
 
 	// Ensure log directory exists once at startup
 	try {
@@ -339,7 +393,7 @@ export default function windowsNotification(pi: ExtensionAPI): void {
 		const trimmed = content.trim();
 
 		if (trimmed === "/notify") {
-			showSettingsUI(state, logger, ctx, true);
+			showSettingsUI(state, logger, ctx, agentDir, true);
 			return { handled: true } as any;
 		}
 
@@ -376,46 +430,48 @@ export default function windowsNotification(pi: ExtensionAPI): void {
 
 	pi.on("tool_call", async (event) => {
 		if (event.toolName === "ask" && state.config.enableAskNotify) {
+			const t = i18n(state);
 			const questions =
 				((event.input as any).questions as Array<{
 					question: string;
 					options: Array<{ label: string }>;
 				}>) ?? [];
-			const question = questions[0]?.question ?? "需要你的确认";
+			const question = questions[0]?.question ?? t.notifications.askConfirm;
 			const options = questions[0]?.options ?? [];
 
-			let message = `问题:${question}`;
+			let message = t.notifications.askQuestion(question);
 			if (options.length > 0) {
 				message +=
-					"\n\n可选操作:\n" +
-					options.map((opt, idx) => `${idx + 1}. ${opt.label}`).join("\n");
+					"\n\n" + t.notifications.askOptions + "\n" +
+					options.map((opt, idx) => t.notifications.askOptionItem(idx + 1, opt.label)).join("\n");
 			}
-			message += "\n请回到Pi回复。";
+			message += "\n" + t.notifications.askReturn;
 
-			await sendNotification("❓ 需要你的确认", message, state, logger);
+			await sendNotification(t.notifications.askConfirm, message, state, logger);
 		}
 	});
 
 	pi.registerCommand("notify", {
-		description: "Windows通知设置菜单",
+		description: i18n(state).commands.notifyDescription,
 		handler: async (_args, ctx) => {
-			await showSettingsUI(state, logger, ctx);
+			await showSettingsUI(state, logger, ctx, agentDir);
 		},
 	});
 
 	pi.on("session_start", async (_event, _ctx) => {
+		const t = i18n(state);
 		logger.info(
-			`Windows notification plugin loaded, enabled: ${state.config.notifyEnabled}, afk: ${state.config.onlyNotifyWhenAfk}`,
+			t.logs.pluginLoaded(state.config.notifyEnabled, state.config.onlyNotifyWhenAfk),
 		);
 		if (needsAfkCapture) {
-			const captured = await captureCurrentWindow(logger);
+			const captured = await captureCurrentWindow(logger, t);
 			if (captured) {
 				afkReferenceWindow = captured;
 				logger.info(
-					`AFK模式重启,自动记录参考窗口:0x${captured.hwnd.toString(16)}`,
+					t.logs.afkRestartCaptured(`0x${captured.hwnd.toString(16)}`),
 				);
 			} else {
-				logger.warn("AFK模式重启,但无法捕获当前窗口,本次启动不会生效");
+				logger.warn(t.logs.afkRestartFailed);
 				state.config.onlyNotifyWhenAfk = false;
 			}
 		}

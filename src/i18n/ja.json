@@ -1,0 +1,38 @@
+{
+	"settings": {
+		"title": "Windows 通知設定",
+		"enabled": "有効",
+		"enabledDesc": "Windows システム通知のマスタースイッチ。オフにすると、タスク完了や確認の通知は一切送信されません。",
+		"notifyMode": "通知モード",
+		"notifyModeAfkDesc": "AFKモード：現在のウィンドウから離れた時のみ通知を送信します。",
+		"notifyModeAllDesc": "全モード：ウィンドウ前にいるかどうかにかかわらず、条件を満たす全タスクが通知を送信します。",
+		"language": "言語",
+		"languageDesc": "プラグインインターフェースと通知の表示言語を選択します。"
+	},
+	"notifications": {
+		"taskFailed": "❌ タスク失敗",
+		"taskFailedMsg": "エラー：{errorMsg}{taskLine}\nPiに戻って詳細を確認してください。",
+		"taskComplete": "✅ タスク完了",
+		"taskCompleteMsg": "{taskLine}完了しました\nPiに戻って結果を確認してください。",
+		"askConfirm": "❓ 確認が必要です",
+		"askQuestion": "質問:{question}",
+		"askOptions": "選択肢:",
+		"askOptionItem": "{idx}. {label}",
+		"askReturn": "Piに戻って回答してください。",
+		"unknownError": "不明なエラー",
+		"yourTask": "あなたのタスク：{task}",
+		"returnToPi": "Piに戻って詳細を確認してください。",
+		"returnToPiResult": "Piに戻って結果を確認してください。"
+	},
+	"commands": {
+		"notifyDescription": "Windows通知設定メニュー"
+	},
+	"logs": {
+		"referenceWindow": "参照ウィンドウを記録: ハンドル={hwnd}, タイトル=\"{title}\"",
+		"windowCaptureFailed": "ウィンドウキャプチャ失敗: {err}",
+		"windowCheckFailed": "ウィンドウ検出失敗: {err}",
+		"afkRestartCaptured": "AFKモード再起動, 参照ウィンドウを自動記録:{hwnd}",
+		"afkRestartFailed": "AFKモード再起動, 現在のウィンドウをキャプチャできません, 今回は無効になります",
+		"pluginLoaded": "Windows通知プラグイン読み込み完了, 有効: {enabled}, AFK: {afk}"
+	}
+}

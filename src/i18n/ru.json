@@ -1,0 +1,38 @@
+{
+	"settings": {
+		"title": "Настройки уведомлений Windows",
+		"enabled": "Включено",
+		"enabledDesc": "Главный переключатель системных уведомлений Windows. При отключении уведомления о завершении задач и подтверждениях отправляться не будут.",
+		"notifyMode": "Режим уведомлений",
+		"notifyModeAfkDesc": "Режим AFK: Уведомления отправляются только когда вы отошли от текущего окна.",
+		"notifyModeAllDesc": "Режим «Все»: Все подходящие задачи будут отправлять уведомления, независимо от того, находитесь ли вы у окна.",
+		"language": "Язык",
+		"languageDesc": "Выберите язык отображения интерфейса плагина и уведомлений."
+	},
+	"notifications": {
+		"taskFailed": "❌ Ошибка задачи",
+		"taskFailedMsg": "Ошибка: {errorMsg}{taskLine}\nВернитесь в Pi для подробностей.",
+		"taskComplete": "✅ Задача выполнена",
+		"taskCompleteMsg": "{taskLine}выполнена\nВернитесь в Pi для просмотра результатов.",
+		"askConfirm": "❓ Требуется подтверждение",
+		"askQuestion": "Вопрос:{question}",
+		"askOptions": "Варианты:",
+		"askOptionItem": "{idx}. {label}",
+		"askReturn": "Вернитесь в Pi для ответа.",
+		"unknownError": "Неизвестная ошибка",
+		"yourTask": "Ваша задача: {task}",
+		"returnToPi": "Вернитесь в Pi для подробностей.",
+		"returnToPiResult": "Вернитесь в Pi для просмотра результатов."
+	},
+	"commands": {
+		"notifyDescription": "Меню настроек уведомлений Windows"
+	},
+	"logs": {
+		"referenceWindow": "Эталонное окно записано: дескриптор={hwnd}, заголовок=\"{title}\"",
+		"windowCaptureFailed": "Захват окна не удался: {err}",
+		"windowCheckFailed": "Проверка окна не удалась: {err}",
+		"afkRestartCaptured": "Режим AFK перезапущен, автозахват эталонного окна:{hwnd}",
+		"afkRestartFailed": "Режим AFK перезапущен, но не удалось захватить текущее окно, не будет действовать в этой сессии",
+		"pluginLoaded": "Плагин уведомлений Windows загружен, включён: {enabled}, AFK: {afk}"
+	}
+}

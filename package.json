@@ -1,7 +1,39 @@
 {
-  "name": "pi-plugin-windows-notify",
-  "version": "1.0.0",
-  "description": "Pi Windows系统通知插件，任务完成和需要用户确认时自动发送通知，支持AFK模式仅离开窗口时通知",
+  "name": "@xiaoso/pi-plugin-windows-notify",
+  "version": "0.0.1",
+  "description": "Pi Windows notification plugin - sends notifications on task completion and user confirmation needed, with AFK mode to notify only when away from window",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "pi",
+    "pi-extension",
+    "windows",
+    "notification",
+    "afk",
+    "desktop-notify"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xiaoso456/pi-plugin-windows-notify.git"
+  },
+  "author": "xiaoso456",
+  "publishConfig": {
+    "access": "public"
+  },
+  "os": [
+    "win32"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "pi": {
     "extensions": [
       "./src/index.ts"

@@ -1,0 +1,38 @@
+{
+	"settings": {
+		"title": "Windows Notification Settings",
+		"enabled": "Enabled",
+		"enabledDesc": "Master switch for Windows system notifications. When off, no task completion or confirmation notifications will be sent.",
+		"notifyMode": "Notify Mode",
+		"notifyModeAfkDesc": "AFK mode: Only send notifications when you are away from the current window.",
+		"notifyModeAllDesc": "All mode: All qualifying tasks will trigger notifications, regardless of whether you are at the window.",
+		"language": "Language",
+		"languageDesc": "Select the display language for the plugin interface and notifications."
+	},
+	"notifications": {
+		"taskFailed": "❌ Task Failed",
+		"taskFailedMsg": "Error: {errorMsg}{taskLine}\nPlease return to Pi for details.",
+		"taskComplete": "✅ Task Complete",
+		"taskCompleteMsg": "{taskLine}completed\nPlease return to Pi to view results.",
+		"askConfirm": "❓ Confirmation Required",
+		"askQuestion": "Question: {question}",
+		"askOptions": "Options:",
+		"askOptionItem": "{idx}. {label}",
+		"askReturn": "Please return to Pi to respond.",
+		"unknownError": "Unknown error",
+		"yourTask": "Your task: {task}",
+		"returnToPi": "Please return to Pi for details.",
+		"returnToPiResult": "Please return to Pi to view results."
+	},
+	"commands": {
+		"notifyDescription": "Windows notification settings menu"
+	},
+	"logs": {
+		"referenceWindow": "Reference window recorded: handle={hwnd}, title=\"{title}\"",
+		"windowCaptureFailed": "Window capture failed: {err}",
+		"windowCheckFailed": "Window check failed: {err}",
+		"afkRestartCaptured": "AFK mode restarted, auto-captured reference window: {hwnd}",
+		"afkRestartFailed": "AFK mode restarted, but unable to capture current window, will not take effect this session",
+		"pluginLoaded": "Windows notification plugin loaded, enabled: {enabled}, afk: {afk}"
+	}
+}
