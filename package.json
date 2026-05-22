@@ -1,6 +1,6 @@
 {
   "name": "@xiaoso/pi-plugin-windows-notify",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Pi Windows notification plugin - sends notifications on task completion and user confirmation needed, with AFK mode to notify only when away from window",
   "main": "./src/index.ts",
   "exports": {
