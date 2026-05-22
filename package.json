@@ -17,7 +17,8 @@
     "windows",
     "notification",
     "afk",
-    "desktop-notify"
+    "desktop-notify",
+    "pi-package"
   ],
   "license": "MIT",
   "repository": {
